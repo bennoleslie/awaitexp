@@ -1,4 +1,4 @@
-from sched import schedule, switch
+from sched import run, switch
 
 
 async def coro1():
@@ -25,4 +25,4 @@ async def coro2():
     print("C2: Stop")
 
 
-schedule([coro1(), coro2()])
+run([coro1(), coro2()])

@@ -13,7 +13,7 @@ class _Switch:
 switch = _Switch()
 
 
-def schedule(coros):
+def run(coros):
     """Execute a list of co-routines until all have completed."""
     coros = list(coros)
 
