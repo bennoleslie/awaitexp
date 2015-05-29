@@ -13,3 +13,8 @@ This is in juxtaposition to the relatively complex schedulers found in the stand
 The goal of experiment 2 is to add an awaitable sleep co-routine function to our scheduler.
 This adds a reasonable amount of complexity to the scheduler, although the sleep function itself is rather simple.
 Whether or not this sleep aspect of the scheduler will be easily composable with other events in the future will be interesting.
+
+## Experiment 3 - Enable adding new co-routines
+
+Currently only the co-routines specified at the start can be scheduled.
+The goal of this experiment is to allow new co-routines to be added after the scheudler has started running.
