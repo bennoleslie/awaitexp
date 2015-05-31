@@ -18,3 +18,9 @@ Whether or not this sleep aspect of the scheduler will be easily composable with
 
 Currently only the co-routines specified at the start can be scheduled.
 The goal of this experiment is to allow new co-routines to be added after the scheudler has started running.
+
+## Experiment 4 - Interacting with a thread pool
+
+Sometimes there are compute (or IO) task that would be better to perform in the background, not on the main thread.
+This experiment shows an example of the ThreadPoolExecuter interacting with scheduled co-routines to achieve backgrounded computation.
+This technique probably won't be a good basis in the long run as it will not be possible to wait on an IO selector and a thread Queue at the same time.
