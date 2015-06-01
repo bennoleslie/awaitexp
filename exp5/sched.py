@@ -53,22 +53,22 @@ class _Scheduler:
                     self._coros.remove((coro, value))
 
             if self._coros:
-                next_wakeup = 0
+                timeout = 0
             else:
                 if wakeups:
-                    next_wakeup = min(wakeup for (wakeup, _) in wakeups) - time.time()
-                    if next_wakeup < 0:
-                        next_wakeup = 0
+                    timeout = min(wakeup for (wakeup, _) in wakeups) - time.time()
+                    if timeout < 0:
+                        timeout = 0
                 else:
-                    next_wakeup = None
+                    timeout = None
 
             if len(self.selector.get_map()):
-                for key, events in self.selector.select(timeout=next_wakeup):
+                for key, events in self.selector.select(timeout=timeout):
                     self.selector.unregister(key.fileobj)
                     self._coros.append((key.data, events))
             else:
-                if next_wakeup is not None:
-                    time.sleep(next_wakeup)
+                if timeout:
+                    time.sleep(timeout)
 
             now = time.time()
             for (wakeup, coro) in list(wakeups):

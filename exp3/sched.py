@@ -29,27 +29,37 @@ class _Scheduler:
         # Copy argument list to avoid modification of arguments.
         wakeups = []
 
-        while self._coros or wakeups:
+        while self._coros:
             # Copy the list for iteration, to enable removal from original
             # list.
+            for coro in list(self._coros):
+                try:
+                    args = coro.send(None)
+                    if 'delay' in args:
+                        wakeup = time.time() + args['delay']
+                        self._coros.remove(coro)
+                        wakeups.append((wakeup, coro))
+                except StopIteration:
+                    self._coros.remove(coro)
+
+            if self._coros:
+                timeout = 0
+            else:
+                if wakeups:
+                    timeout = min(wakeup for (wakeup, _) in wakeups) - time.time()
+                    if timeout < 0:
+                        timeout = 0
+                else:
+                    timeout = None
+
+            if timeout:
+                time.sleep(timeout)
+
             now = time.time()
             for (wakeup, coro) in list(wakeups):
                 if wakeup <= now:
                     wakeups.remove((wakeup, coro))
                     self._coros.append(coro)
 
-            if self._coros:
-                for coro in list(self._coros):
-                    try:
-                        args = coro.send(None)
-                        if 'delay' in args:
-                            wakeup = time.time() + args['delay']
-                            self._coros.remove(coro)
-                            wakeups.append((wakeup, coro))
-                    except StopIteration:
-                        self._coros.remove(coro)
-            else:
-                next_wakeup = min(wakeup for (wakeup, _) in wakeups)
-                time.sleep(next_wakeup - now)
 
 scheduler = _Scheduler()

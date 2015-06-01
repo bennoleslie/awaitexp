@@ -20,25 +20,34 @@ def run(coros):
     coros = list(coros)
     wakeups = []
 
-    while coros or wakeups:
+    while coros:
         # Copy the list for iteration, to enable removal from original
         # list.
+        for coro in list(coros):
+            try:
+                args = coro.send(None)
+                if 'delay' in args:
+                    wakeup = time.time() + args['delay']
+                    coros.remove(coro)
+                    wakeups.append((wakeup, coro))
+            except StopIteration:
+                coros.remove(coro)
+
+        if coros:
+            timeout = 0
+        else:
+            if wakeups:
+                timeout = min(wakeup for (wakeup, _) in wakeups) - time.time()
+                if timeout < 0:
+                    timeout = 0
+            else:
+                timeout = None
+
+        if timeout:
+            time.sleep(timeout)
+
         now = time.time()
         for (wakeup, coro) in list(wakeups):
             if wakeup <= now:
                 wakeups.remove((wakeup, coro))
                 coros.append(coro)
-
-        if coros:
-            for coro in list(coros):
-                try:
-                    args = coro.send(None)
-                    if 'delay' in args:
-                        wakeup = time.time() + args['delay']
-                        coros.remove(coro)
-                        wakeups.append((wakeup, coro))
-                except StopIteration:
-                    coros.remove(coro)
-        else:
-            next_wakeup = min(wakeup for (wakeup, _) in wakeups)
-            time.sleep(next_wakeup - now)

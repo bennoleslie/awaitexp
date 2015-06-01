@@ -38,46 +38,49 @@ class _Scheduler:
         """Execute a list of co-routines until all have completed."""
         # Copy argument list to avoid modification of arguments.
         wakeups = []
-        futures = []
+        futures = {}
 
-        while self._coros or wakeups or futures:
+        while self._coros:
             # Copy the list for iteration, to enable removal from original
             # list.
+            for coro, value in list(self._coros):
+                try:
+                    args = coro.send(value)
+                    op = args.get('op')
+                    if op == 'sleep':
+                        wakeup = time.time() + args['delay']
+                        self._coros.remove((coro, value))
+                        wakeups.append((wakeup, coro))
+                    elif op == 'background':
+                        future = self._executor.submit(args['fn'], *args['args'], **args['kwargs'])
+                        futures[future] = coro
+                        self._coros.remove((coro, value))
+                except StopIteration:
+                    self._coros.remove((coro, value))
+
+            if self._coros:
+                timeout = 0
+            else:
+                if wakeups:
+                    timeout = min(wakeup for (wakeup, _) in wakeups) - time.time()
+                    if timeout < 0:
+                        timeout = 0
+                else:
+                    timeout = None
+
+            if futures:
+                completed, _ = wait(futures.keys(), timeout=timeout, return_when=FIRST_COMPLETED)
+                for future in completed:
+                    coro = futures.pop(future)
+                    self._coros.append((coro, future.result()))
+            else:
+                if timeout:
+                    time.sleep(timeout)
+
             now = time.time()
             for (wakeup, coro) in list(wakeups):
                 if wakeup <= now:
                     wakeups.remove((wakeup, coro))
                     self._coros.append((coro, None))
-
-            for (future, coro) in list(futures):
-                if future.done():
-                    futures.remove((future, coro))
-                    self._coros.append((coro, future.result()))
-
-            if self._coros:
-                for coro, value in list(self._coros):
-                    try:
-                        args = coro.send(value)
-                        op = args.get('op')
-                        if op == 'sleep':
-                            wakeup = time.time() + args['delay']
-                            self._coros.remove((coro, value))
-                            wakeups.append((wakeup, coro))
-                        elif op == 'background':
-                            future = self._executor.submit(args['fn'], *args['args'], **args['kwargs'])
-                            futures.append((future, coro))
-                            self._coros.remove((coro, value))
-                    except StopIteration:
-                        self._coros.remove((coro, value))
-            else:
-                if wakeups:
-                    next_wakeup = min(wakeup for (wakeup, _) in wakeups)
-                    timeout = next_wakeup - now
-                else:
-                    timeout = None
-                if futures:
-                    wait([f for (f, _) in futures], timeout=timeout, return_when=FIRST_COMPLETED)
-                else:
-                    time.sleep(timeout)
 
 scheduler = _Scheduler()
