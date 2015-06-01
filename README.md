@@ -24,3 +24,8 @@ The goal of this experiment is to allow new co-routines to be added after the sc
 Sometimes there are compute (or IO) task that would be better to perform in the background, not on the main thread.
 This experiment shows an example of the ThreadPoolExecuter interacting with scheduled co-routines to achieve backgrounded computation.
 This technique probably won't be a good basis in the long run as it will not be possible to wait on an IO selector and a thread Queue at the same time.
+
+## Experiment 5 - Interact with selectable file descriptors
+
+A typical use of co-routines is to interact with asynchronous I/O.
+The goal of this experiment is to have the scheduler interact with Python's selectors module to provide a basic async I/O model.
