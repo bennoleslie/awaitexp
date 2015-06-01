@@ -29,3 +29,8 @@ This technique probably won't be a good basis in the long run as it will not be 
 
 A typical use of co-routines is to interact with asynchronous I/O.
 The goal of this experiment is to have the scheduler interact with Python's selectors module to provide a basic async I/O model.
+
+## Experiment 6 - Interact with thread pool and selectable file descriptors
+
+The goal of this experiment is to effectively merge the features in experiments 4 and 5.
+This will use the standard self-pipe (actually a self-socket) trick to notify the select method of background completion.
